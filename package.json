@@ -1,0 +1,57 @@
+{
+  "name": "pouchdb-drview",
+  "version": "0.1.0",
+  "description": "Helpers for native implementation of secondary indexes",
+  "main": "./lib/index.js",
+  "scripts": {
+    "build": "node ./bin/build.js",
+    "test-node": "sh bin/test-node.sh",
+    "test-browser": "./bin/test-browser.js",
+    "launch-dev-server": "node ./bin/dev-server.js",
+    "test": "bash bin/run-test.sh"
+  },
+  "keywords": [
+    "pouchdb",
+    "couchdb",
+    "map",
+    "reduce",
+    "mrview"
+  ],
+  "author": "Steve Genoud",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "argsarray": "0.0.1",
+    "debug": "^2.2.0",
+    "inherits": "^2.0.1",
+    "pouchdb": "^5.2.1",
+    "pouchdb-collate": "^1.2.0",
+    "scope-eval": "0.0.3"
+  },
+  "devDependencies": {
+    "browserify": "^13.0.0",
+    "bundle-collapser": "^1.2.1",
+    "chai": "^3.5.0",
+    "chai-as-promised": "^5.2.0",
+    "denodeify": "^1.2.1",
+    "derequire": "^2.0.3",
+    "es3ify": "^0.2.1",
+    "findit": "^2.0.0",
+    "http-server": "^0.8.5",
+    "lie": "^3.0.2",
+    "memdown": "^1.1.2",
+    "mkdirp": "^0.5.1",
+    "mocha": "^2.4.5",
+    "ncp": "^2.0.0",
+    "node-watch": "^0.3.5",
+    "request": "^2.69.0",
+    "rimraf": "^2.5.2",
+    "rollup": "^0.25.4",
+    "sauce-connect-launcher": "^0.14.0",
+    "seedrandom": "^2.4.2",
+    "selenium-standalone": "^4.9.0",
+    "stream-to-promise": "^1.1.0",
+    "throw-max-listeners-error": "^1.0.1",
+    "uglify-js": "^2.6.1",
+    "wd": "^0.4.0"
+  }
+}
