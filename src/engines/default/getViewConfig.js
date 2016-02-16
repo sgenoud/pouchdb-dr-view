@@ -3,7 +3,7 @@ import utils from '../../utils';
 var parseViewName = utils.parseViewName;
 
 
-export default function (db, fun, opts) {
+export default function (db, fun) {
   var fullViewName = fun;
   var parts = parseViewName(fullViewName);
   var designDocName = parts[0];

@@ -25,7 +25,7 @@ var spawn = require('child_process').spawn;
 var pkg = require('../package.json');
 var version = pkg.version;
 var external = Object.keys(pkg.dependencies).concat([
- 'fs', 'crypto', 'events', 'path', 'pouchdb', 'level-sublevel/legacy',
+ 'fs', 'crypto', 'events', 'path', 'pouchdb', 'level-sublevel/legacy'
 ]);
 
 
@@ -74,7 +74,7 @@ function doBrowserify(path, opts, exclude) {
 function doRollup(entry, fileOut) {
   return rollup.rollup({
     entry: entry,
-    external: external,
+    external: external
   }).then(function (bundle) {
     var code = bundle.generate({format: 'cjs'}).code;
     return writeFile(fileOut, addVersion(code));
@@ -117,7 +117,7 @@ function buildForBrowser() {
   }).then(function (code) {
     return Promise.all([
       writeFile('dist/pouchdb.dr-view.js', code),
-      doUglify(code, '', 'dist/pouchdb.dr-view.min.js'),
+      doUglify(code, '', 'dist/pouchdb.dr-view.min.js')
     ]);
   });
 }
@@ -128,7 +128,6 @@ function cleanup() {
 
 if (process.argv[2] === 'node') {
   buildForNode();
-  return;
 }
 
 Promise.resolve()

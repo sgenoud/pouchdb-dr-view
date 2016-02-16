@@ -5,6 +5,8 @@
   "main": "./lib/index.js",
   "scripts": {
     "build": "node ./bin/build.js",
+    "eslint": "eslint bin/ src/",
+    "posttest": "npm run eslint",
     "test-node": "sh bin/test-node.sh",
     "test-browser": "./bin/test-browser.js",
     "launch-dev-server": "node ./bin/dev-server.js",
@@ -37,6 +39,7 @@
     "denodeify": "^1.2.1",
     "derequire": "^2.0.3",
     "es3ify": "^0.2.1",
+    "eslint": "^2.1.0",
     "findit": "^2.0.0",
     "http-server": "^0.8.5",
     "lie": "^3.0.2",

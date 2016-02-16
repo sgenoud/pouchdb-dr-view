@@ -132,8 +132,7 @@ export default function (view, batch) {
     logger('Writing on db');
     return view.db.bulkDocs({docs: dbChanges}).then(function (res) {
       logger('Written on db');
-
-      return Promise.resolve();
+      return Promise.resolve(res);
     });
   });
 
