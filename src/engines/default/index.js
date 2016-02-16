@@ -5,6 +5,7 @@ import UpdatesIterator from './UpdatesIterator';
 import createMapFunction from './createMapFunction';
 import writeInView from './writeInView';
 import partialIndex from './partialIndex';
+import getViewConfig from './getViewConfig';
 
 
 var getLastSeq = function (view) {
@@ -18,13 +19,31 @@ var getLastSeq = function (view) {
 };
 
 export default {
-  createViewStore: createViewStore,
-  queryView: queryView,
-  UpdatesIterator: UpdatesIterator,
+  name: 'default',
 
+  getViewConfig: getViewConfig,
+  createViewStore: createViewStore,
+
+  queryView: queryView,
   getLastSeq: getLastSeq,
 
   createMapFunction: createMapFunction,
-  writeInView: writeInView,
   partialIndex: partialIndex,
+
+  UpdatesIterator: UpdatesIterator,
+  writeInView: writeInView,
+
+  preUpdate: function () { return Promise.resolve(); },
+  postUpdate: function () { return Promise.resolve(); },
+
+  preQuery: function () { return Promise.resolve(); },
+  postQuery: function (view, results) {
+    return Promise.resolve(results);
+  },
+
+  preAll: function () { return Promise.resolve(); },
+  postAll: function (view, results) {
+    return Promise.resolve(results);
+  },
+
 };

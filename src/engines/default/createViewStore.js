@@ -8,13 +8,12 @@ function createView(opts) {
   var viewName = opts.viewName;
   var mapFun = opts.map;
   var reduceFun = opts.reduce;
-  var temporary = opts.temporary;
 
   // the "undefined" part is for backwards compatibility
   var viewSignature = mapFun.toString() + (reduceFun && reduceFun.toString()) +
     'undefined';
 
-  if (!temporary && sourceDB._cachedViews) {
+  if (sourceDB._cachedViews) {
     var cachedView = sourceDB._cachedViews[viewSignature];
     if (cachedView) {
       return Promise.resolve(cachedView);
@@ -23,8 +22,7 @@ function createView(opts) {
 
   return sourceDB.info().then(function (info) {
 
-    var depDbName = info.db_name + '-mrview-' +
-      (temporary ? 'temp' : md5(viewSignature));
+    var depDbName = info.db_name + '-mrview-' + md5(viewSignature);
 
     // save the view name in the source db so it can be cleaned up if necessary
     // (e.g. when the _design doc is deleted, remove all associated view data)
@@ -55,13 +53,11 @@ function createView(opts) {
           reduceFun: reduceFun,
         };
 
-        if (!temporary) {
-          sourceDB._cachedViews = sourceDB._cachedViews || {};
-          sourceDB._cachedViews[viewSignature] = view;
-          view.db.once('destroyed', function () {
-            delete sourceDB._cachedViews[viewSignature];
-          });
-        }
+        sourceDB._cachedViews = sourceDB._cachedViews || {};
+        sourceDB._cachedViews[viewSignature] = view;
+        view.db.once('destroyed', function () {
+          delete sourceDB._cachedViews[viewSignature];
+        });
 
         return view;
       });

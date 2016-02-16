@@ -23,9 +23,11 @@
     "argsarray": "0.0.1",
     "debug": "^2.2.0",
     "inherits": "^2.0.1",
+    "js-extend": "^1.0.1",
     "pouchdb": "^5.2.1",
     "pouchdb-collate": "^1.2.0",
-    "scope-eval": "0.0.3"
+    "scope-eval": "0.0.3",
+    "uuid": "^2.0.1"
   },
   "devDependencies": {
     "browserify": "^13.0.0",

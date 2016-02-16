@@ -4,17 +4,43 @@ import WriteQueue from './WriteQueue';
 var collate = pouchCollate.collate;
 
 import engines from './engines/index';
-var viewEngines = {};
-
-import utils from './utils';
-var parseViewName = utils.parseViewName;
-
-import debug from 'debug';
-var logger = debug('pouchdb:view');
+import { extend as extend } from 'js-extend';
 
 import errors from './errors';
 import loopPromises from './deps/loopPromises';
 var forOf = loopPromises.forOf;
+
+var DEFAULT = engines.default;
+
+var getEngine = function (engine, parent) {
+  if (!parent) { parent = DEFAULT; }
+
+  if (engines[engine]) {
+    engine = engines[engine];
+  }
+  return extend({}, parent, engine);
+};
+
+var CONFIG = {
+  readBuffer: 87,
+  writeBuffer: 101,
+  engine: Object.create(engines.default),
+};
+
+
+var configureEngine = function (configuration) {
+  if (configuration.readBuffer) {
+    CONFIG.readBuffer = configuration.readBuffer;
+  }
+  if (configuration.writeBuffer) {
+    CONFIG.writeBuffer = configuration.writeBuffer;
+  }
+
+  if (!configuration.engine) { return; }
+  CONFIG.engine = getEngine(configuration.engine);
+};
+
+
 
 function checkPositiveInteger(number) {
   if (number) {
@@ -67,16 +93,29 @@ function getQueue(view) {
   return queue;
 }
 
-function updateView(engine, view) {
+function queryView(engine, view, opts) {
+  return engine.preQuery(view).then(function () {
+    return engine.queryView(view, opts);
+  }).then(function (results) {
+    return engine.postQuery(view, results);
+  });
+}
 
+function updateView(engine, view) {
   // we want to execute updates in sequence
   return getQueue(view).add(function () {
-    return engine.getLastSeq(view).then(function (lastSeqDoc) {
+    return engine.preUpdate(view).then(function () {
+      return engine.getLastSeq(view);
+    }).then(function (lastSeqDoc) {
 
       // loading the relevant parts from the engine
-      var updatesReader = new engine.UpdatesIterator(view, lastSeqDoc.seq, 87);
+      var updatesReader = new engine.UpdatesIterator(
+        view, lastSeqDoc.seq, CONFIG.readBuffer
+      );
       var mapFun = engine.createMapFunction(view);
-      var viewWriter = new WriteQueue(engine.writeInView.bind(engine, view), 101);
+      var viewWriter = new WriteQueue(
+        engine.writeInView.bind(null, view), CONFIG.writeBuffer
+      );
 
       return forOf(updatesReader, function (update) {
         var docId = update.doc._id;
@@ -97,6 +136,8 @@ function updateView(engine, view) {
       }).then(function () {
         // Wait for everything to be written down;
         return viewWriter.finished();
+      }).then(function () {
+        return engine.postUpdate(view);
       });
     });
   });
@@ -104,43 +145,42 @@ function updateView(engine, view) {
 
 
 function query(db, fun, opts) {
-  var fullViewName = fun;
-  var parts = parseViewName(fullViewName);
-  var designDocName = parts[0];
-  var viewName = parts[1];
+  var engine = CONFIG.engine;
 
-  var engine = engines.default;
+  if (typeof fun !== 'string') {
+    engine = getEngine('temp', engine);
+  }
 
-  return db.get('_design/' + designDocName).then(function (doc) {
-    var fun = doc.views && doc.views[viewName];
+  var view;
 
-    if (!fun || typeof fun.map !== 'string') {
-      throw new errors.NotFoundError('ddoc ' + designDocName +
-      ' has no view named ' + viewName);
-    }
-    checkQueryParseError(opts, fun);
+  return engine.preAll().then(function () {
+    return engine.getViewConfig(db, fun, opts);
+  }).then(function (createViewOpts) {
+    checkQueryParseError(opts, {
+      reduce: createViewOpts.reduce,
+      map: createViewOpts.map,
+    });
 
-    var createViewOpts = {
-      db: db,
-      viewName: fullViewName,
-      map: fun.map,
-      reduce: fun.reduce,
-    };
-    return engine.createViewStore(createViewOpts).then(function (view) {
-      if (opts.stale === 'ok' || opts.stale === 'update_after') {
+    return engine.createViewStore(createViewOpts);
+  }).then(function (viewStore) {
+    // Updating the view store and returning the query
+    view = viewStore;
+    if (opts.stale === 'ok' || opts.stale === 'update_after') {
+      return queryView(engine, view, opts).then(function (results) {
         if (opts.stale === 'update_after') {
           process.nextTick(function () {
             updateView(engine, view);
           });
         }
-        return engine.queryView(view, opts);
-      } else { // stale not ok
-        return updateView(engine, view).then(function () {
-          logger('query view');
-          return engine.queryView(view, opts);
-        });
-      }
-    });
+        return Promise.resolve(results);
+      });
+    } else { // stale not ok
+      return updateView(engine, view).then(function () {
+        return queryView(engine, view, opts);
+      });
+    }
+  }).then(function (results) {
+    return engine.postAll(view, results);
   });
 }
 
@@ -149,16 +189,10 @@ var exports = {
   _query: function (fun, options, callback) {
     var db = this;
     query(db, fun, options)
-      .then(function (res) {
-        callback(null, res);
-      })
-      .catch(function (error) {
-        callback(error);
-      });
+      .then(function (res) { callback(null, res); })
+      .catch(function (error) { callback(error); });
   },
-  registerViewEngine: function (id, engine) {
-    viewEngines[id] = engine;
-  },
+  configure: configureEngine,
 };
 
 /* istanbul ignore next */
